@@ -43,6 +43,55 @@ You can run the included test script using PySpark inside a container or on your
 	python test_spark_script.py
 	```
 
+## Testing a Basic Spark Job
+
+You can test your Spark cluster by running the provided `test_spark_script.py`, which performs a simple word count.
+
+### Option 1: Run Locally
+
+1. Install PySpark:
+	```bash
+	pip install pyspark
+	```
+2. Run the script:
+	```bash
+	python test_spark_script.py
+	```
+	You should see output like:
+	```
+	hello: 3
+	world: 1
+	spark: 1
+	docker: 1
+	```
+
+### Option 2: Run Inside the Spark Master Container
+
+1. Copy the script into the container:
+	```bash
+	docker cp test_spark_script.py spark-master:/tmp/
+	```
+2. Access the container:
+	```bash
+	docker exec -it spark-master bash
+	```
+3. (If needed) Install Python and PySpark:
+	```bash
+	apt-get update && apt-get install -y python3 python3-pip
+	pip3 install pyspark
+	```
+4. Run the script:
+	```bash
+	python3 /tmp/test_spark_script.py
+	```
+	You should see output like:
+	```
+	hello: 3
+	world: 1
+	spark: 1
+	docker: 1
+	```
+
 #### Option 2: Run inside the Spark master container
 
 1. Access the master container:
