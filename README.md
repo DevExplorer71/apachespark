@@ -1,130 +1,41 @@
 # apachespark
 
-## Setup Instructions
+## Spark History Server Setup
 
-This project uses Docker Compose to run an Apache Spark cluster (1 master, 2 workers).
+This project is configured to enable the Spark History Server for viewing completed applications.
 
-### Prerequisites
+### How to use
 
-- [Docker](https://docs.docker.com/get-docker/)
-- [Docker Compose](https://docs.docker.com/compose/install/)
+1. Make sure the `spark-events` directory exists in your project root:
+   ```powershell
+   mkdir spark-events
+   ```
 
-### Steps
+2. Start the Spark cluster:
+   ```powershell
+   docker-compose down ; docker-compose up -d
+   ```
 
-1. **Clone the repository:**
-	```bash
-	git clone <repo-url>
-	cd apachespark
-	```
+3. Submit your Spark job with event logging enabled (inside the container):
+   ```bash
+   spark-submit \
+     --conf spark.jars.ivy=/opt/bitnami/spark/tmp/.ivy2 \
+     --conf spark.local.dir=/opt/bitnami/spark/tmp/spark \
+     --conf spark.eventLog.enabled=true \
+     --conf spark.eventLog.dir=/opt/bitnami/spark/tmp/spark-events \
+     /tmp/test_spark_script.py
+   ```
 
-2. **Start the Spark cluster:**
-	```bash
-	docker-compose up -d
-	```
-	This will start the Spark master (web UI at http://localhost:8080) and two worker nodes.
+   spark-submit --conf spark.jars.ivy=/opt/bitnami/spark/tmp/.ivy2 --conf spark.local.dir=/opt/bitnami/spark/tmp/spark --conf spark.eventLog.enabled=true --conf spark.eventLog.dir=/opt/bitnami/spark/tmp/spark-events /tmp/test_spark_script.py
 
-3. **Verify the cluster:**
-	Visit [http://localhost:8080](http://localhost:8080) to check the Spark master UI.
+4. Access the Spark History Server UI at:
+   [http://localhost:18080](http://localhost:18080)
 
-## Basic Operation Instructions
+Completed applications will appear in the History Server UI after your jobs finish.
 
-### Running a Spark Job
+---
 
-You can run the included test script using PySpark inside a container or on your local machine (if you have PySpark installed).
-
-#### Option 1: Run with PySpark installed locally
-
-1. Install PySpark:
-	```bash
-	pip install pyspark
-	```
-2. Run the script:
-	```bash
-	python test_spark_script.py
-	```
-
-## Testing a Basic Spark Job
-
-You can test your Spark cluster by running the provided `test_spark_script.py`, which performs a simple word count.
-
-### Option 1: Run Locally
-
-1. Install PySpark:
-	```bash
-	pip install pyspark
-	```
-2. Run the script:
-	```bash
-	python test_spark_script.py
-	```
-	You should see output like:
-	```
-	hello: 3
-	world: 1
-	spark: 1
-	docker: 1
-	```
-
-### Option 2: Run Inside the Spark Master Container
-
-1. Copy the script into the container:
-	```bash
-	docker cp test_spark_script.py spark-master:/tmp/
-	```
-2. Access the container:
-	```bash
-	docker exec -it spark-master bash
-	```
-3. (If needed) Install Python and PySpark:
-	```bash
-	apt-get update && apt-get install -y python3 python3-pip
-	pip3 install pyspark
-	```
-4. Run the script:
-	```bash
-	python3 /tmp/test_spark_script.py
-	```
-	You should see output like:
-	```
-	hello: 3
-	world: 1
-	spark: 1
-	docker: 1
-	```
-
-#### Option 2: Run inside the Spark master container
-
-1. Access the master container:
-	```bash
-	docker exec -it spark-master bash
-	```
-2. (Optional) Install Python and PySpark if not present:
-	```bash
-	apt-get update && apt-get install -y python3 python3-pip
-	pip3 install pyspark
-	```
-3. Copy `test_spark_script.py` into the container or use `docker cp`:
-	```bash
-	docker cp test_spark_script.py spark-master:/tmp/
-	```
-4. Run the script:
-	```bash
-	python3 /tmp/test_spark_script.py
-	```
-
-## Stopping the Cluster
-
-To stop and remove all containers:
-```bash
-docker-compose down
-```
-
-## Notes
-
-- The Spark master UI is available at [http://localhost:8080](http://localhost:8080).
-- The cluster is configured for basic testing and development.
-
-## License
-
-See LICENSE file (if available).
+## Troubleshooting
+- If you see errors about Ivy or local directories, make sure you are using the provided `docker-compose.yml` and the correct submit command above.
+- If the History Server UI does not show completed jobs, check that event logs are being written to the `spark-events` directory.
 

@@ -5,17 +5,30 @@ services:
     image: custom-spark:latest
     container_name: spark-master
     environment:
-      SPARK_MODE: master
-      SPARK_RPC_AUTHENTICATION_ENABLED: "no"
-      SPARK_RPC_ENCRYPTION_ENABLED: "no"
-      SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: "no"
-      SPARK_SSL_ENABLED: "no"
-      HOME: /home/sparkuser
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+      - HOME=/opt/bitnami/spark/tmp
+      - IVY_HOME=/opt/bitnami/spark/tmp/.ivy2
+      - SPARK_LOCAL_DIRS=/opt/bitnami/spark/tmp/spark
+      - SPARK_HISTORY_OPTS=-Dspark.history.fs.logDirectory=/opt/bitnami/spark/tmp/spark-events
+      - SPARK_EVENTLOG_ENABLED=true
+      - SPARK_EVENTLOG_DIR=/opt/bitnami/spark/tmp/spark-events
+      - SPARK_NETWORK_IO_FRAME_SIZE=128m
+      - SPARK_NETWORK_IO_MAXRETRIES=10
+      - SPARK_NETWORK_IO_CONNECTIONTIMEOUT=60000
+      - SPARK_RPC_MESSAGE_MAXSIZE=134217728
+      - SPARK_NETWORK_MAXREMOTEBLOCKSIZEFETCHTOMEM=134217728
     ports:
       - "8080:8080" # Spark master web UI
       - "7077:7077" # Spark master port
     networks:
       - spark-net
+    volumes:
+      - ./tmp:/tmp
+      - ./spark-events:/opt/bitnami/spark/tmp/spark-events
 
   spark-worker-1:
     build: .
@@ -35,6 +48,8 @@ services:
       - spark-master
     networks:
       - spark-net
+    volumes:
+      - ./tmp:/tmp
 
   spark-worker-2:
     build: .
@@ -54,6 +69,29 @@ services:
       - spark-master
     networks:
       - spark-net
+    volumes:
+      - ./tmp:/tmp
+
+  spark-history:
+    build: .
+    image: custom-spark:latest
+    container_name: spark-history
+    environment:
+      - SPARK_HISTORY_OPTS=-Dspark.history.fs.logDirectory=/opt/bitnami/spark/tmp/spark-events
+      - SPARK_EVENTLOG_ENABLED=true
+      - SPARK_EVENTLOG_DIR=/opt/bitnami/spark/tmp/spark-events
+      - SPARK_NETWORK_IO_FRAME_SIZE=128m
+      - SPARK_NETWORK_IO_MAXRETRIES=10
+      - SPARK_NETWORK_IO_CONNECTIONTIMEOUT=60000
+      - SPARK_RPC_MESSAGE_MAXSIZE=134217728
+      - SPARK_NETWORK_MAXREMOTEBLOCKSIZEFETCHTOMEM=134217728
+    ports:
+      - "18080:18080"
+    networks:
+      - spark-net
+    volumes:
+      - ./spark-events:/opt/bitnami/spark/tmp/spark-events
+    command: /opt/bitnami/spark/bin/spark-class org.apache.spark.deploy.history.HistoryServer
 
 networks:
   spark-net:
